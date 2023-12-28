@@ -663,29 +663,41 @@ $MAX_UPLOAD_SIZE = min(asBytes(ini_get('post_max_size')), asBytes(ini_get('uploa
 				var $link = $('<a class="name" />')
 					.attr('href', data.is_dir ? '#' + encodeURIComponent(data.path) : '<?php echo $base_dir ?>/' + encodeURIComponent(data.path))
 					.text(data.name);
+
 				var allow_direct_link = <?php echo $allow_direct_link ? 'true' : 'false'; ?>;
 				if (!data.is_dir && !allow_direct_link) $link.css('pointer-events', 'none');
+
 				var $dl_link = $('<a/>').attr('href', '?do=download&file=' + encodeURIComponent(data.path))
 					.addClass('download').text('download');
-				var $edit_link = $('<a/>').attr('href', 'javascript:edit_file(\'' + encodeURIComponent(data.path) + '\'); try {document.getElementById("mceu_28-body").remove()} catch(err){}')
-					.addClass('edit').text('edit');
+
+				var $edit_link = $('<a/>').attr('href', 'javascript:edit_file(\'' + encodeURIComponent(data.path) + '\');')
+					.addClass('edit').html('<img src="data:image/png;base64,YOUR_EDIT_ICON_BASE64_HERE" alt="Edit" /> edit');
+
 				var $delete_link = $('<a href="#" />').attr('data-file', data.path).addClass('delete').text('delete');
-				var $rename_link = $('<a href="#" />').attr('data-file', data.path).addClass('rename').text('rename');
+
+				// Cloning the edit link HTML and classes for the rename link
+				var $rename_link = $('<a href="#" />').attr('data-file', data.path)
+					.addClass('rename edit')
+					.html($edit_link.html().replace('edit', 'rename'));
+
 				var perms = [];
 				perms.push('<?php echo get_current_user() ?>');
 				if (data.is_readable) perms.push('read');
 				if (data.is_writable) perms.push('write');
 				if (data.is_executable) perms.push('exec');
+
 				var $html = $('<tr />')
 					.addClass(data.is_dir ? 'is_dir' : '')
 					.append($('<td class="first" />').append($link))
 					.append($('<td/>').attr('data-sort', data.is_dir ? -1 : data.size)
 						.html($('<span class="size" />').text(formatFileSize(data.size))))
 					.append($('<td/>').attr('data-sort', data.mtime).text(formatTimestamp(data.mtime)))
-					.append($('<td/>').text(perms.slice(0, 1) + ": " + perms.slice(1).join('+')))
-					.append($('<td/>').append($edit_link).append($dl_link).append($delete_link).append($rename_link))
+					.append($('<td/>').text(perms.join(', ')))
+					.append($('<td/>').append($edit_link).append($dl_link).append($delete_link).append($rename_link));
+
 				return $html;
 			}
+
 
 			function renderBreadcrumbs(path) {
 				var base = "",
@@ -789,12 +801,20 @@ $MAX_UPLOAD_SIZE = min(asBytes(ini_get('post_max_size')), asBytes(ini_get('uploa
 			var old_name = $(this).attr('data-file');
 			var new_name = prompt('Enter new name for ' + old_name);
 			if (new_name && new_name !== old_name) {
-				$.post('', { 'do': 'rename', 'old_name': old_name, 'new_name': new_name, 'xsrf': XSRF }, function (response) {
-					list();
+				var xsrf_token = $('input[name="xsrf"]').val(); // Adjust this selector to match your XSRF token field
+				$.post('', { 'do': 'rename', 'old_name': old_name, 'new_name': new_name, 'xsrf': xsrf_token }, function (response) {
+					if (response.success) {
+						list();
+					} else {
+						alert('Error renaming file: ' + (response.error && response.error.msg || 'Unknown error'));
+					}
+				}, 'json').fail(function () {
+					alert('Error sending rename request.');
 				});
 			}
 			return false;
 		});
+
 
 
 	</script>
