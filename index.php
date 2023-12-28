@@ -671,7 +671,7 @@ $MAX_UPLOAD_SIZE = min(asBytes(ini_get('post_max_size')), asBytes(ini_get('uploa
 					.addClass('download').text('download');
 
 				var $edit_link = $('<a/>').attr('href', 'javascript:edit_file(\'' + encodeURIComponent(data.path) + '\');')
-					.addClass('edit').html('<img src="data:image/png;base64,YOUR_EDIT_ICON_BASE64_HERE" alt="Edit" /> edit');
+					//.addClass('edit').html('<img src="data:image/png;base64,YOUR_EDIT_ICON_BASE64_HERE" alt="Edit" /> edit');
 
 				var $delete_link = $('<a href="#" />').attr('data-file', data.path).addClass('delete').text('delete');
 
@@ -808,6 +808,7 @@ $MAX_UPLOAD_SIZE = min(asBytes(ini_get('post_max_size')), asBytes(ini_get('uploa
 					} else {
 						alert('Error renaming file: ' + (response.error && response.error.msg || 'Unknown error'));
 					}
+					location.reload();
 				}, 'json').fail(function () {
 					alert('Error sending rename request.');
 				});
