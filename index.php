@@ -130,7 +130,15 @@ if($_GET['do'] == 'list') {
 	ob_flush();
 	readfile($file);
 	exit;
+} elseif ($_POST['do'] == 'rename') {
+    $old_name = $_POST['old_name'];
+    $new_name = $_POST['new_name'];
+    if(file_exists($old_name) && !file_exists($new_name)) {
+        rename($old_name, $new_name);
+    }
+    exit;
 }
+
 
 
 if(!$_COOKIE['_sfm_xsrf'])
@@ -506,6 +514,7 @@ $(function(){
 			.append( $('<td/>').attr('data-sort',data.mtime).text(formatTimestamp(data.mtime)) )
 			.append( $('<td/>').text(perms.slice(0,1) + ": " + perms.slice(1).join('+')) )
 			.append( $('<td/>').append($edit_link).append($dl_link).append( data.is_deleteable ? $delete_link : '') )
+			.append( $('<td/>').append($('<a href="#" />').attr('data-file', data.path).addClass('rename').text('rename')) )
 		return $html;
 	}
 	function renderBreadcrumbs(path) {
@@ -604,6 +613,17 @@ $(document).ready(function() {
         // Redirect to the corrected URL
         window.location.href = correctedHref;
     });
+});
+
+$('#table').on('click', '.rename', function() {
+    var old_name = $(this).attr('data-file');
+    var new_name = prompt('Enter new name for ' + old_name);
+    if(new_name && new_name !== old_name) {
+        $.post('', { 'do': 'rename', 'old_name': old_name, 'new_name': new_name, 'xsrf': XSRF }, function(response) {
+            list();
+        });
+    }
+    return false;
 });
 
 </script>
